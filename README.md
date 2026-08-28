@@ -1,6 +1,6 @@
-# Nether Wart Farm Helper
+# Aqua Vision is OP
 
-A focused, client-only Fabric mod for Minecraft Java Edition 26.2. It automates one movement pattern for a five-deep Nether Wart test farm:
+A focused, client-only Fabric farm helper for Minecraft Java Edition 26.2. This completed version 1.2 automates one movement pattern for five-deep test farms:
 
 ```text
 Attack + A  ->  detect blocked lane end  ->  W transition
@@ -8,48 +8,28 @@ Attack + D  ->  detect blocked lane end  ->  W transition
 repeat
 ```
 
-The mod does not change movement speed, aim the camera, inspect crops, manage inventory, send packets, sell items, teleport, reconnect, or pathfind. Use it only in worlds and on servers where automation is allowed.
+Each F6 start snaps the player's absolute yaw to `90°` and pitch to a level `0°`, then holds that pitch while the pattern runs. The helper can continue while Minecraft is Alt-Tabbed or minimized and sends a native computer alert when monitored crop activity stalls.
+
+The mod does not change movement speed, manage inventory, send custom packets, sell items, teleport, reconnect, or pathfind. Use it only in worlds and on servers where automation is allowed.
 
 ## Requirements
 
 - Minecraft Java Edition 26.2
-- JDK 25 for development
-- Fabric Loader 0.19.3 or newer compatible 0.19.x release
+- Fabric Loader 0.19.3 or a newer compatible 0.19.x release
 - Fabric API 0.158.0+26.2
-- Gradle 9.5.1 (the included wrapper downloads it)
+- JDK 25 for development
 
-Minecraft 26.2 is unobfuscated. This project therefore uses the modern `net.fabricmc.fabric-loom` plugin and Minecraft's official class names, with no Yarn mappings dependency.
-
-## Build
-
-From the project directory:
-
-```bash
-./gradlew build
-```
-
-On Windows PowerShell or Command Prompt:
-
-```powershell
-.\gradlew.bat build
-```
-
-The runnable mod JAR is generated in `build/libs/`. The `-sources.jar` file is for development and should not be installed as the mod.
-
-To launch a development client:
-
-```bash
-./gradlew runClient
-```
+Minecraft 26.2 is unobfuscated. This project uses Fabric Loom with Minecraft's official class names and does not require Yarn mappings.
 
 ## Install
 
 1. Install Fabric Loader for Minecraft 26.2.
 2. Put Fabric API 0.158.0+26.2 in the instance's `mods` folder.
-3. Put `nether-wart-farm-helper-1.0.0.jar` in the same `mods` folder.
-4. Start the Fabric 26.2 profile.
+3. Remove every older or unfinished release of this helper, including any previous copy named `aqua-vision-is-op-1.2.0.jar`. They share the same internal mod ID and cannot be installed together.
+4. Put `aqua-vision-is-op-1.2.0.jar` in the `mods` folder.
+5. Start the Fabric 26.2 profile.
 
-This is a client-only mod. A server does not need to install it.
+Only the normal `.jar` is installable. The `-sources.jar` is provided for inspection and development and must not be placed in the `mods` folder.
 
 ## Controls
 
@@ -57,26 +37,53 @@ This is a client-only mod. A server does not need to install it.
 | --- | --- |
 | F6 | Start a new session, or stop the current session |
 | F7 | Pause or resume without resetting the lane counter |
-| F8 | Emergency stop and immediately force Attack, A, D, and W to released |
+| F8 | Emergency stop and immediately release Attack, A, D, and W |
 
-All three bindings appear under **Options > Controls > Key Binds > Nether Wart Farm Helper** and can be changed.
+The bindings appear under **Options > Controls > Key Binds > Aqua Vision is OP** and can be changed.
 
-F8 has priority over the other actions and is also captured directly inside inventory, chat, pause, and other screens, where ordinary gameplay keybind clicks are suppressed. Stop, pause, disconnect, death or respawn, world/dimension replacement, client shutdown, invalid player/world state, an open GUI, and unexpected controller errors all release the four inputs owned by the mod.
+F8 has priority over other mod actions and also works while an in-game screen is open. When another desktop application has keyboard focus, Minecraft cannot receive F8; refocus Minecraft first if an emergency stop is needed.
+
+Use the client command `/avop testalert` while connected to a world to request the same desktop alert immediately. It works whether the farming session is running or stopped and is the quickest installation check for the Windows dialog, sound, and taskbar flash.
+
+## Fixed startup orientation
+
+With the default configuration, F6 immediately sets yaw to absolute `90°` and pitch to `0°`. Minecraft yaw `+90°` faces west, toward negative X; pitch `0°` is a level, horizontal view. Both values are captured before the first A/D input is applied, so lane-end math and the orientation guard use the correct direction.
+
+The body and head are aligned for a clean third-person yaw transition. Pitch remains locked at the configured value while the session is actively running, including while Minecraft is in the background. F7 pause or F6/F8 stop releases the camera; F7 resume restores the fixed pitch. Yaw is set at startup but is not continuously steered.
+
+## Background operation
+
+With `runInBackground` enabled, an active session continues while Minecraft is unfocused or minimized:
+
+- a narrow 26.2 client mixin prevents only the automatic focus-loss pause screen while the session is actively farming;
+- Attack, A, D, and W remain owned by the controller and are reapplied from stored states each background client tick; and
+- normal focus behavior returns immediately on F7 pause, F6 stop, F8, disconnect, failure, or client shutdown.
+
+This does not change or save Minecraft's `pauseOnLostFocus` option, does not capture the real mouse, does not bring Minecraft to the foreground, and does not steal desktop focus. Manually opening chat, inventory, pause, or another screen still pauses and releases inputs by default.
+
+The process must still be running and receiving client ticks. Operating-system sleep/hibernate, a frozen or crashed client, disconnection, or a server-side rejection cannot be bypassed. Minimized rendering may be throttled by Minecraft, but game ticks continue and catch up normally.
+
+## Crop-activity alert
+
+The default 3-second activity monitor is designed around the crop primarily used with this helper. A successful client-observed `NETHER_WART` block break resets its timer. Other crop types can still use the movement pattern, but should set `noWartFailsafeEnabled` to `false` unless their activity is added to the monitor later.
+
+When the timeout is reached on Windows, the mod plays the native warning sound, repeatedly flashes the Minecraft taskbar button until Minecraft is brought forward, and places a topmost Windows warning dialog on the currently active desktop. The dialog remains visible until dismissed and is not kept behind the background Minecraft window. This path uses the Windows session API directly and does not depend on Java's system-tray support or Action Center. Other operating systems retain the Java tray-notification fallback. A red HUD warning also remains visible.
+
+The failsafe warning is deliberately not posted to in-game chat. Automation continues; the first later monitored break clears the HUD warning and rearms one future alert. Paused time does not count. Windows Focus Assist does not suppress the native dialog, although system sound settings can silence its audible component. If every desktop delivery path fails, the error is logged and the HUD warning remains available without stopping the farm session.
 
 ## First test setup
 
 1. Use a backup or disposable test world first.
-2. Stand at the beginning of a long, five-deep Nether Wart lane with a solid end that physically blocks sideways movement.
-3. Set the intended movement-speed setup (approximately 93 in the environment this farm was designed for). The mod never changes speed.
-4. Aim yaw and pitch manually for the farm. The mod records the starting yaw but never rotates the camera.
-5. Press F6. The default session begins with Attack + A.
-6. Keep a hand near F8 during calibration.
+2. Stand at the beginning of a long, five-deep test-farm lane with a solid end that physically blocks sideways movement.
+3. Set the intended movement-speed setup. The mod never changes speed.
+4. Press F6. Yaw snaps to `90°`, pitch snaps to level `0°`, and the default session starts with Attack + A.
+5. After confirming normal movement, Alt-Tab and verify that movement and breaking continue.
+6. For the alert test, leave the helper active where no monitored crop can be broken, minimize Minecraft, and wait 3 active seconds for the native Windows dialog, sound, and taskbar flash.
+7. Keep a hand near F8 during foreground calibration.
 
-The lane-end detector relies on the player being physically unable to continue sideways. An open-ended lane is not a detectable lane end and the mod will keep moving sideways.
+The lane-end detector relies on the player being physically blocked. An open-ended lane is not a detectable lane end and the helper will keep moving sideways.
 
 ## State machine
-
-The controller uses explicit states instead of one monolithic tick routine:
 
 ```text
 IDLE
@@ -89,121 +96,101 @@ IDLE
   -> FARM_LEFT ...
 ```
 
-`PAUSED` preserves the active phase and lane. If the player moves farther than `pausePositionTolerance` while paused, resume becomes a fail-safe stop because the saved transition phase may no longer match the physical position. `STOPPED` is used after emergency and fail-safe stops. A fresh F6 start always resets the lane to 1.
+`PAUSED` preserves the phase and lane. If the player moves farther than `pausePositionTolerance` while paused, resume becomes a safe stop because the saved transition may no longer match the farm. `STOPPED` follows emergency and fail-safe stops. A fresh F6 start resets the lane to 1 and reapplies startup yaw and pitch.
 
-During normal farming, the input combinations are strictly Attack + A or Attack + D. W is released. During a lane transition, only W is held and Attack/A/D are released. After the W timer, all controlled inputs remain released for the configured settle period before the opposite lateral direction begins.
+During lateral farming, the combinations are strictly Attack + A or Attack + D, with W released. During a lane transition, only W is held. All four inputs remain released for the configured settle period before the opposite lateral direction starts.
 
 ## Lane-end detection
 
-The long sideways section is not timed. At every end-of-client tick, `MovementMonitor` compares the current X/Z position with the previous sample and projects that displacement onto the expected local left or right direction. A lane end is confirmed only when projected progress remains below `minimumMovementDelta` for `stuckDetectionTicks` consecutive samples after `laneStartGraceTicks` startup samples.
+The long sideways section is not timed. At every end-of-client tick, `MovementMonitor` projects X/Z displacement onto the expected local left or right direction. A lane end is confirmed only after projected progress remains below `minimumMovementDelta` for `stuckDetectionTicks` consecutive samples following `laneStartGraceTicks` startup samples.
 
-A single slow tick, initial acceleration, or a short lag spike therefore does not immediately change lanes. Debug mode also shows horizontal displacement, projected progress, the consecutive stuck count, and horizontal collision state.
-
-### Why yaw-relative math matters
-
-Global X increasing does not always mean the A key is making progress. With the starting yaw in radians, the local-left unit vector is:
-
-```text
-left = (cos(yaw), sin(yaw)) in the X/Z plane
-right = -left
-progress = dot(currentPosition - previousPosition, expectedDirection)
-```
-
-This works when the player faces north, south, east, west, or an intermediate angle. The optional orientation guard pauses if yaw moves too far from the recorded starting yaw, so the original lane coordinate frame is not silently invalidated.
+This debounce prevents a single slow tick, initial acceleration, or a short lag spike from immediately changing lanes. Debug mode shows displacement, projected progress, collision state, the stuck counter, transition timer, and crop-activity timer.
 
 ## Configuration
 
-On first launch, the mod creates:
+The helper intentionally retains its original internal ID and configuration filename so upgrades keep existing settings:
 
 ```text
 <game directory>/config/nether-wart-farm-helper.json
 ```
 
-The file is reloaded whenever a new F6 session starts. Stop the session before editing it. An `example-config.json` is included in the source project.
-
-Default values:
+The file reloads whenever F6 starts a new session. Stop before editing it. On the first load of this completed v1.2 build, an older file is migrated once: its existing settings are retained, the inactivity timeout changes to 3 seconds, the new orientation/background defaults are added, and `configVersion` is set to `3`. Later edits are preserved. Copy fields from `example-config.json` when customization is needed.
 
 | Setting | Default | Meaning |
 | --- | ---: | --- |
+| `configVersion` | `3` | Internal one-time migration marker; leave this at 3 |
 | `startingDirection` | `LEFT` | `LEFT` starts with A; `RIGHT` starts with D |
-| `forwardShiftTicks` | `10` | Number of ticks to hold only W between lanes |
-| `transitionSettleTicks` | `2` | Released-input ticks before lateral farming resumes |
+| `forwardShiftTicks` | `10` | Ticks to hold only W between lanes |
+| `transitionSettleTicks` | `2` | Released-input ticks before lateral movement resumes |
 | `stuckDetectionTicks` | `8` | Consecutive low-progress samples required for a lane end |
-| `minimumMovementDelta` | `0.003` | Minimum projected blocks-per-tick progress considered movement |
-| `laneStartGraceTicks` | `10` | Samples ignored after entering a lane to allow acceleration |
+| `minimumMovementDelta` | `0.003` | Minimum expected-direction progress considered movement |
+| `laneStartGraceTicks` | `10` | Samples ignored when entering a lane |
 | `holdAttack` | `true` | Hold the vanilla Attack mapping during lateral farming |
 | `showHud` | `true` | Show the compact status overlay |
-| `showDebugInfo` | `false` | Add movement and timer diagnostics to the overlay |
-| `pauseWhenScreenOpen` | `true` | Pause and release inputs when chat, inventory, menus, or another screen opens |
-| `orientationGuardEnabled` | `true` | Pause when yaw leaves the starting reference frame |
-| `orientationToleranceDegrees` | `12.0` | Maximum absolute wrapped yaw deviation |
-| `pausePositionTolerance` | `0.35` | Maximum horizontal movement allowed while paused before resume fails safe |
+| `showDebugInfo` | `false` | Add movement, transition, and activity diagnostics |
+| `pauseWhenScreenOpen` | `true` | Pause when an in-game GUI opens |
+| `orientationGuardEnabled` | `true` | Pause when yaw leaves the startup reference frame |
+| `orientationToleranceDegrees` | `12.0` | Maximum wrapped yaw deviation |
+| `pausePositionTolerance` | `0.35` | Maximum horizontal movement allowed while paused |
+| `noWartFailsafeEnabled` | `true` | Enable the currently Nether-Wart-based activity monitor |
+| `noWartTimeoutSeconds` | `3` | Active seconds without a monitored break before alerting |
+| `noWartDesktopNotification` | `true` | Enable the native desktop alert and window-attention request |
+| `alignYawOnStart` | `true` | Snap yaw when F6 starts a session |
+| `startYawDegrees` | `90.0` | Absolute startup yaw, clamped to -180° through +180° |
+| `lockPitchWhileRunning` | `true` | Set and continuously hold the configured pitch during an active session |
+| `fixedPitchDegrees` | `0.0` | Fixed pitch, clamped to -90° through +90°; 0° is level |
+| `runInBackground` | `true` | Keep client automation active while unfocused or minimized |
 
-Invalid numeric values are clamped to safe ranges. If the JSON cannot be parsed, the mod logs the error, uses defaults for that session, and leaves the invalid file untouched so it can be repaired.
+Invalid numeric values are clamped. If JSON parsing fails, the mod logs the error, uses defaults for that session, and leaves the invalid file untouched.
 
-## Calibration
+## Build
 
-Change one value at a time and test with F8 ready.
-
-- If W does not move far enough into the next lane, increase `forwardShiftTicks`.
-- If W moves too far, decrease `forwardShiftTicks`.
-- If a lane end triggers during a temporary slowdown, increase `stuckDetectionTicks`, increase `laneStartGraceTicks`, or lower `minimumMovementDelta`.
-- If a real blocked end takes too long to confirm, decrease `stuckDetectionTicks` or raise `minimumMovementDelta` slightly.
-- If W and A/D feel too close together, increase `transitionSettleTicks`.
-- If normal camera jitter pauses the helper, raise `orientationToleranceDegrees` carefully or disable the orientation guard.
-- Enable `showDebugInfo` to observe `Delta`, `Progress`, `Collision`, `Stuck`, and the transition timer.
-
-`minimumMovementDelta` is a sensitivity threshold: raising it classifies more small movements as "not enough progress"; lowering it classifies more small movements as valid progress.
-
-## HUD
-
-Normal examples:
-
-```text
-Farm Helper: OFF
-
-Farm Helper: ON
-Lane: 4
-Direction: LEFT
-
-Farm Helper: ON
-Lane: 4
-State: SHIFTING
-
-Farm Helper: PAUSED
-Lane: 4
+```powershell
+.\gradlew.bat build
 ```
 
-Debug mode adds state, X/Z position, horizontal delta, expected-direction progress, collision, stuck counter, and transition timer. Logs are emitted for meaningful state changes only, not every tick.
+The installable and source JARs are generated in `build/libs/`. To launch a development client:
+
+```powershell
+.\gradlew.bat runClient
+```
 
 ## Project structure
 
 ```text
 src/client/java/dev/winso/netherwarthelper/
-  NetherWartFarmHelperClient.java     Fabric entrypoint and event wiring
-  controller/                         Finite-state machine and direction/state enums
-  input/                              Centralized vanilla key-state control
-  config/                             JSON model, validation, loading, and saving
-  hud/                                Compact and debug HUD extraction
-  keybind/                            F6/F7/F8 registration and click handling
+  NetherWartFarmHelperClient.java     Event wiring
+  controller/                         Farming state machine
+  input/                              Stored and reapplied vanilla key states
+  mixin/                              Narrow focus-loss pause override
+  notification/                       Native system notification and window attention
+  orientation/                        Per-frame active-session pitch lock
+  config/, hud/, keybind/             Config persistence and user interface
 
-src/main/java/dev/winso/netherwarthelper/movement/
-  DirectionMath.java                  Yaw-relative X/Z vectors and projection
-  MovementMonitor.java                Grace period and consecutive-stuck detection
+src/main/java/dev/winso/netherwarthelper/
+  background/                         Focus policy and active-session flag
+  config/FarmConfig.java              Validated settings and upgrade defaults
+  controller/FarmingDirection.java    Platform-independent direction model
+  failsafe/NoWartFailsafeMonitor.java
+  movement/DirectionMath.java
+  movement/MovementMonitor.java
+  orientation/PitchLockState.java     Platform-independent pitch-lock lifecycle
 
-src/test/java/.../movement/           Projection and debounce unit tests
+src/test/java/.../                    Background, movement, and failsafe tests
 ```
 
 ## Known limitations
 
-- Version 1 supports only the alternating A/W/D pattern. It does not verify that the targeted block is Nether Wart or mature.
-- It assumes the camera was aimed correctly before F6 and does not correct yaw or pitch.
-- It needs a physical blocked end to detect a completed long lane.
-- The short W transition is intentionally tick-timed and must be calibrated for the farm and movement setup.
-- Lag lasting at least `stuckDetectionTicks` samples can still resemble a blocked end.
-- Pausing during a transition is safe only if the player stays within `pausePositionTolerance`; otherwise the session stops.
-- Input simulation cannot guarantee permission on a multiplayer server. Server rules and anti-cheat policies still apply.
+- The movement controller supports only the alternating A/W/D pattern.
+- Crop maturity and horizontal aim are not automatically corrected; yaw is aligned only at startup.
+- The activity monitor currently recognizes Nether Wart breaks only.
+- Multiplayer block-break detection is client-predicted rather than a remote-server acknowledgement.
+- A physical blocked end is required for lane transitions.
+- The short W transition must be calibrated for the farm and movement setup.
+- Long lag can resemble a blocked lane; system sound settings can mute the alert sound, but the Windows dialog remains visible.
+- F8 cannot reach Minecraft while another application owns keyboard focus.
+- Server rules and anti-cheat policies still apply.
 
 ## License
 
-MIT. The old Forge 1.8.9 FarmHelper artifact supplied as a reference was inspected only for high-level behavioral ideas; this implementation is original Fabric 26.2 code and does not copy its source.
+MIT. The supplied FarmHelperV2 and Sunflower artifacts were inspected only for high-level behavior. This Fabric 26.2 implementation is original and does not copy their source.
