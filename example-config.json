@@ -1,0 +1,15 @@
+{
+  "startingDirection": "LEFT",
+  "forwardShiftTicks": 10,
+  "transitionSettleTicks": 2,
+  "stuckDetectionTicks": 8,
+  "minimumMovementDelta": 0.003,
+  "laneStartGraceTicks": 10,
+  "holdAttack": true,
+  "showHud": true,
+  "showDebugInfo": false,
+  "pauseWhenScreenOpen": true,
+  "orientationGuardEnabled": true,
+  "orientationToleranceDegrees": 12.0,
+  "pausePositionTolerance": 0.35
+}

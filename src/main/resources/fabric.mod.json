@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "nether_wart_farm_helper",
+  "version": "${version}",
+  "name": "Nether Wart Farm Helper",
+  "description": "Client-side alternating-lane movement automation for a five-deep Nether Wart test farm.",
+  "authors": [
+    "Nether Wart Farm Helper contributors"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.winso.netherwarthelper.NetherWartFarmHelperClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": ">=0.158.0"
+  }
+}
