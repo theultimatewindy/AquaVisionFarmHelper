@@ -17,6 +17,14 @@ public final class DirectionMath {
 		);
 	}
 
+	public static HorizontalVector forwardUnit(double yawDegrees) {
+		double yawRadians = Math.toRadians(yawDegrees);
+		return new HorizontalVector(
+			-Math.sin(yawRadians),
+			Math.cos(yawRadians)
+		);
+	}
+
 	public static double projectedProgress(
 		double deltaX,
 		double deltaZ,

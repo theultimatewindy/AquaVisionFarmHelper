@@ -45,6 +45,14 @@ public final class FarmKeybinds {
 		return emergencyStop.matches(event);
 	}
 
+	public boolean matchesToggle(KeyEvent event) {
+		return toggle.matches(event);
+	}
+
+	public boolean matchesPause(KeyEvent event) {
+		return pause.matches(event);
+	}
+
 	private static KeyMapping register(String translationKey, int defaultKey) {
 		return KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			translationKey,

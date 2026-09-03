@@ -1,9 +1,10 @@
 package dev.winso.netherwarthelper.movement;
 
 /**
- * Detects sustained failure to make progress in a commanded local direction.
- * A grace period and consecutive-tick confirmation prevent one slow tick from
- * being interpreted as the end of a lane.
+ * Detects sustained failure to make progress against a wall in the commanded
+ * local direction. A short grace period and consecutive-tick confirmation keep
+ * one slow tick, or collision against the previous lane's side wall, from
+ * being interpreted as a new lane end.
  */
 public final class MovementMonitor {
 	private boolean initialized;
@@ -40,7 +41,8 @@ public final class MovementMonitor {
 		DirectionMath.HorizontalVector expectedDirection,
 		double minimumMovementDelta,
 		int stuckDetectionTicks,
-		int graceTicks
+		int graceTicks,
+		boolean blockedInExpectedDirection
 	) {
 		if (!initialized) {
 			reset(x, z);
@@ -61,7 +63,8 @@ public final class MovementMonitor {
 			return false;
 		}
 
-		if (lastExpectedProgress < Math.max(0.0, minimumMovementDelta)) {
+		if (blockedInExpectedDirection
+			&& lastExpectedProgress < Math.max(0.0, minimumMovementDelta)) {
 			stuckCounter++;
 		} else {
 			stuckCounter = 0;

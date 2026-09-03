@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "nether_wart_farm_helper",
   "version": "${version}",
-  "name": "Nether Wart Farm Helper",
-  "description": "Client-side alternating-lane movement automation for a five-deep Nether Wart test farm.",
+  "name": "Aqua Vision is OP",
+  "description": "Client-side farm helper for five-deep test farms with background operation, Garden pest handling, and safety alerts.",
   "authors": [
-    "Nether Wart Farm Helper contributors"
+    "Aqua Vision is OP contributors"
   ],
   "license": "MIT",
   "environment": "client",
@@ -14,6 +14,9 @@
       "dev.winso.netherwarthelper.NetherWartFarmHelperClient"
     ]
   },
+  "mixins": [
+    "aqua_vision_is_op.client.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.2",

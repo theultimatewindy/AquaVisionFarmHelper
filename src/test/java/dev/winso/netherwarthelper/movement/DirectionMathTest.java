@@ -18,6 +18,14 @@ class DirectionMathTest {
 	}
 
 	@Test
+	void localForwardFollowsMinecraftYaw() {
+		assertVector(DirectionMath.forwardUnit(0.0), 0.0, 1.0);
+		assertVector(DirectionMath.forwardUnit(90.0), -1.0, 0.0);
+		assertVector(DirectionMath.forwardUnit(180.0), 0.0, -1.0);
+		assertVector(DirectionMath.forwardUnit(-90.0), 1.0, 0.0);
+	}
+
+	@Test
 	void projectionRejectsMovementInTheOppositeDirection() {
 		var expectedLeft = DirectionMath.lateralUnit(0.0, true);
 		assertEquals(0.25, DirectionMath.projectedProgress(0.25, 0.0, expectedLeft), EPSILON);

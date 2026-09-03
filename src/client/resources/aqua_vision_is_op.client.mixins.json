@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_25",
+  "package": "dev.winso.netherwarthelper.mixin",
+  "client": [
+    "ClientLevelParticleMixin",
+    "LocalPlayerPestCameraMixin",
+    "MinecraftBackgroundInputMixin",
+    "MinecraftAttackInvoker",
+    "MouseHandlerPitchLockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
